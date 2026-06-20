@@ -1,0 +1,19 @@
+name: zech-wedding
+region: nyc
+services:
+  - name: proxy
+    dockerfile_path: Dockerfile
+    github:
+      repo: davidzech/zech.wedding
+      branch: main
+      deploy_on_push: true
+    instance_size_slug: basic-xxs
+    instance_count: 1
+    http_port: 8080
+    health_check:
+      http_path: /
+    routes:
+      - path: /
+domains:
+  - domain: zech.wedding
+    type: PRIMARY
