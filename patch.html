@@ -1,0 +1,66 @@
+<script>
+(function () {
+  function applyPatches() {
+    // Set the browser tab title.
+    if (document.title !== "Anne & David's Wedding") {
+      document.title = "Anne & David's Wedding";
+    }
+
+    // Remove the header date/location line (rendered client-side by React).
+    var dateLocation = document.querySelector('[data-testid="header-wedding-date-location"]');
+    if (dateLocation) dateLocation.remove();
+
+    // Add a "5:00 PM" line inside the wedding-date box (rendered client-side).
+    // The hashed class (wws-1e30inf) is unstable, so target by the date text.
+    document.querySelectorAll('span').forEach(function (span) {
+      if (span.textContent.trim() !== 'June 5, 2027') return;
+      var dateBox = span.parentElement;
+      if (!dateBox || dateBox.dataset.timeAppended) return;
+      dateBox.dataset.timeAppended = 'true';
+      var time = document.createElement('span');
+      time.textContent = '5:00 PM';
+      span.insertAdjacentElement('afterend', time);
+      span.insertAdjacentElement('afterend', document.createElement('br'));
+    });
+
+    // Remove the "Wedding Day" date/time block (rendered client-side).
+    // The hashed class is unstable, so target the h4 heading text.
+    document.querySelectorAll('h4').forEach(function (h4) {
+      if (h4.textContent.trim() === 'Wedding Day' && h4.parentElement) {
+        h4.parentElement.remove();
+      }
+    });
+
+    // Replace the footer with an empty one (rendered client-side by React).
+    var footer = document.querySelector('footer');
+    if (footer && (footer.childNodes.length || footer.attributes.length)) {
+      footer.replaceWith(document.createElement('footer'));
+    }
+
+    // (The cookie-consent popup is handled server-side in main.go.)
+  }
+
+  // Coalesce bursts of mutations into a single patch run per frame. This keeps
+  // the permanent observer cheap and avoids re-entrancy from our own DOM edits.
+  var scheduled = false;
+  function schedule() {
+    if (scheduled) return;
+    scheduled = true;
+    requestAnimationFrame(function () {
+      scheduled = false;
+      applyPatches();
+    });
+  }
+
+  // Run once immediately in case some content is already in the DOM.
+  applyPatches();
+
+  // Re-run whenever React/Next.js mutates the DOM. The observer stays connected
+  // for the lifetime of the page so patches reapply across client-side
+  // navigations (e.g. clicking in-page anchor links, which re-render content).
+  new MutationObserver(schedule).observe(document.documentElement, {
+    childList: true,
+    subtree: true,
+  });
+})();
+</script>
