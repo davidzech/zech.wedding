@@ -36,6 +36,90 @@
   .QuestionItem > div:last-child {
     margin: 10px 0 0 !important;
   }
+  /* Once buildQA() has inserted our copy-edited items, hide the originals. */
+  div:has(> .QuestionItem[data-zech-qa]) > .QuestionItem:not([data-zech-qa]) {
+    display: none !important;
+  }
+
+  /* Travel page layout, built by buildTravel() below. The original
+     paragraphs stay in the DOM (React owns them) but are hidden once our
+     rebuilt copy is in place. */
+  .ParagraphItem:has(> .zech-travel) > :not(.zech-travel) {
+    display: none !important;
+  }
+  .zech-travel {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px 56px;
+    margin: 8px 0 24px;
+  }
+  .zech-travel p {
+    margin: 0 0 0.6em;
+    line-height: 1.7;
+  }
+  .zech-travel p:last-child {
+    margin-bottom: 0;
+  }
+  .zech-travel-intro {
+    grid-column: 1 / -1;
+    text-align: center;
+    font-style: italic;
+    max-width: 520px;
+    justify-self: center;
+  }
+  .zech-travel-section {
+    border-top: 1px solid rgba(98, 106, 81, 0.25);
+    padding-top: 24px;
+  }
+  .zech-travel-section h3 {
+    margin: 0 0 14px;
+    font: inherit;
+    font-size: 15px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: inherit;
+  }
+  /* The first section (the venue) spans the page, beside the map. */
+  .zech-travel-feature {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    align-items: center;
+  }
+  .zech-travel-feature p {
+    margin-bottom: 0.2em;
+  }
+  .zech-travel-feature .zech-travel-body > p:first-child {
+    font-size: 26px;
+    letter-spacing: 1px;
+    margin-bottom: 0.4em;
+  }
+  .zech-travel-feature .zech-travel-body a {
+    display: inline-block;
+    margin-top: 18px;
+    padding: 8px 20px;
+    border: 1px solid currentColor;
+    text-decoration: none !important;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-size: 13px;
+  }
+  .zech-travel-map img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+  @media (max-width: 700px) {
+    .zech-travel,
+    .zech-travel-feature {
+      grid-template-columns: 1fr;
+      gap: 32px;
+    }
+    .zech-travel-feature {
+      gap: 24px;
+    }
+  }
 
   /* Minimal replacement footer: a small outlined diamond to close the page. */
   footer[data-zech-footer] {
@@ -51,6 +135,54 @@
     transform: rotate(45deg);
   }
 </style>
+<!--
+  Q + A page content, read by the script below and shown in place of the
+  questions entered in The Knot's editor (edit it here to change the page).
+  Each <h4> is a question and the <p> after it is its answer. To make The
+  Knot's own copy match, enter each pair as a question in the editor.
+-->
+<!--zech:qa-content
+<h4>When is the RSVP deadline?</h4>
+<p>We'll share the date soon.</p>
+<h4>Where is the venue?</h4>
+<p>Grand Island Mansion in Walnut Grove, about 30 minutes from Elk Grove and 50 minutes from Sacramento.</p>
+<h4>Are the ceremony and reception in the same place?</h4>
+<p>Yes! Both are at Grand Island Mansion.</p>
+<h4>Is it indoors or outdoors?</h4>
+<p>The ceremony will be outdoors in front of the mansion, and the reception will be inside.</p>
+<h4>What will the weather be like?</h4>
+<p>Expect a hot, dry day. Evenings are pleasant: mid-70s at 5:00 PM, cooling to around 60 by midnight.</p>
+<h4>What's the best airport to fly into?</h4>
+<p>Sacramento International (SMF), about an hour's drive from the venue.</p>
+<h4>Where should I stay?</h4>
+<p>We recommend Elk Grove or Sacramento.</p>
+<h4>Will there be transportation?</h4>
+<p>We won't be providing a shuttle, so please plan to drive. There's plenty of parking on site.</p>
+-->
+<!--
+  Travel page content. The script below reads the next comment and shows it
+  in place of the Travel page's text block, so edit it there to change the
+  page. To make The Knot's own copy match, enter it in the editor's text
+  block: one paragraph per <p>, bold the <strong> heading lines (the patch
+  splits sections at fully bold lines), and link "Get Directions" to its
+  href. The first section is shown beside the page's first photo (the map).
+-->
+<!--zech:travel-content
+<p>We can't wait to celebrate with you in the Sacramento River Delta. Here's everything you need to plan your trip.</p>
+<p><strong>The Venue</strong></p>
+<p>Grand Island Mansion</p>
+<p>13415 Grand Island Rd</p>
+<p>Walnut Grove, CA 95690</p>
+<p><a href="https://www.google.com/maps/search/?api=1&query=Grand+Island+Mansion" target="_blank" rel="noopener noreferrer">Get Directions</a></p>
+<p><strong>Getting There</strong></p>
+<p>The venue is about a 30 minute drive from Elk Grove and 50 minutes from Sacramento. The last stretch follows quiet two-lane levee roads along the river, so please allow a little extra time.</p>
+<p><strong>Flying In</strong></p>
+<p>The closest airport is Sacramento International (SMF), about an hour's drive from the venue. We recommend renting a car.</p>
+<p><strong>Where to Stay</strong></p>
+<p>Elk Grove and Sacramento both have plenty of hotels and are the most convenient places to stay.</p>
+<p><strong>Parking &amp; Transportation</strong></p>
+<p>There is ample parking on the property and along Grand Island Road. We won't be providing a shuttle, and rideshares can be hard to find in the Delta, so please plan to drive or arrange a ride home in advance.</p>
+-->
 <script>
 (function () {
   function applyPatches() {
@@ -96,7 +228,136 @@
       footer.replaceWith(newFooter);
     }
 
+    // Remove what buildTravel()/buildQA() added once it no longer belongs.
+    // On client-side navigation React reuses container elements and only
+    // removes the nodes it created, so ours would otherwise stay on screen.
+    var onTravel = /\/travel\/?$/.test(location.pathname);
+    if (!onTravel) {
+      document.querySelectorAll('.zech-travel').forEach(function (el) { el.remove(); });
+      document.querySelectorAll('[data-zech-hidden]').forEach(function (el) {
+        el.style.display = '';
+        delete el.dataset.zechHidden;
+      });
+    }
+    document.querySelectorAll('[data-zech-qa]').forEach(function (item) {
+      var parent = item.parentElement;
+      if (!/\/q-a\/?$/.test(location.pathname) ||
+          !parent.querySelector(':scope > .QuestionItem:not([data-zech-qa])')) {
+        item.remove();
+      }
+    });
+
+    // Organize the Travel page into sections (rendered client-side).
+    var travelBlock = onTravel && document.querySelector('.ParagraphItem');
+    if (travelBlock) buildTravel(travelBlock);
+
+    // Swap in the copy-edited Q + A (rendered client-side).
+    if (/\/q-a\/?$/.test(location.pathname)) buildQA();
+
     // (The cookie-consent popup is handled server-side in main.go.)
+  }
+
+  // A paragraph whose entire text is bold is a section heading.
+  function isHeading(p) {
+    var strong = p.querySelector('strong, b');
+    return !!strong && strong.textContent.trim() !== '' &&
+      strong.textContent.trim() === p.textContent.trim();
+  }
+
+  // Page content kept in `<!--zech:<name> ...-->` HTML comments above this
+  // script.
+  function readContent(name) {
+    var marker = 'zech:' + name;
+    var it = document.createNodeIterator(document.body, NodeFilter.SHOW_COMMENT);
+    for (var node; (node = it.nextNode());) {
+      var data = node.data.trim();
+      if (data.indexOf(marker) === 0) return data.slice(marker.length);
+    }
+    return '';
+  }
+  var travelContent = readContent('travel-content');
+  var qaContent = readContent('qa-content');
+
+  // Replace the Q + A items with qaContent. Each new item is a clone of the
+  // first original, so it keeps the site's (hashed) styling classes; the
+  // originals stay in place for React and are hidden by CSS.
+  function buildQA() {
+    var first = document.querySelector('.QuestionItem:not([data-zech-qa])');
+    if (!qaContent || !first || document.querySelector('[data-zech-qa]')) return;
+    var parsed = document.createElement('div');
+    parsed.innerHTML = qaContent;
+    parsed.querySelectorAll('h4').forEach(function (q) {
+      var answer = q.nextElementSibling;
+      var item = first.cloneNode(true);
+      item.dataset.zechQa = 'true';
+      item.removeAttribute('data-testid');
+      item.querySelector('h4').textContent = q.textContent;
+      item.lastElementChild.innerHTML = answer ? answer.innerHTML : '';
+      first.before(item);
+    });
+  }
+
+  // Replace a Travel-page paragraph block with travelContent, laid out as an
+  // intro plus sections split at each bold heading line. The first section is
+  // laid out beside the page's first photo (the map), which becomes a link to
+  // the first Google Maps link in the content. React owns the original nodes,
+  // so we leave them in place (hidden by CSS) and append our own.
+  function buildTravel(block) {
+    if (!travelContent || block.querySelector(':scope > .zech-travel')) return;
+    var parsed = document.createElement('div');
+    parsed.innerHTML = travelContent;
+    var paragraphs = [].filter.call(parsed.children, function (el) {
+      return el.tagName === 'P' && el.textContent.trim() !== '';
+    });
+
+    var root = document.createElement('div');
+    root.className = 'zech-travel';
+    var body = document.createElement('div');
+    body.className = 'zech-travel-intro';
+    paragraphs.forEach(function (p) {
+      if (isHeading(p)) {
+        var section = document.createElement('section');
+        section.className = 'zech-travel-section';
+        var h3 = document.createElement('h3');
+        h3.textContent = p.textContent.trim();
+        body = document.createElement('div');
+        body.className = 'zech-travel-body';
+        var text = document.createElement('div');
+        text.append(h3, body);
+        section.appendChild(text);
+        root.appendChild(section);
+      } else {
+        if (!body.parentNode) root.appendChild(body);
+        body.appendChild(p);
+      }
+    });
+
+    // Feature the first section beside the map photo.
+    var first = root.querySelector('.zech-travel-section');
+    var photo = block.parentElement && block.parentElement.querySelector('.PhotoItem');
+    var img = photo && photo.querySelector('img');
+    if (first && img) {
+      first.classList.add('zech-travel-feature');
+      var mapsLink = root.querySelector('a[href*="google.com/maps"], a[href*="goo.gl/maps"], a[href*="maps.app.goo.gl"]');
+      var map = document.createElement(mapsLink ? 'a' : 'div');
+      map.className = 'zech-travel-map';
+      if (mapsLink) {
+        map.href = mapsLink.href;
+        map.target = '_blank';
+        map.rel = 'noopener noreferrer';
+      }
+      var mapImg = document.createElement('img');
+      mapImg.src = img.currentSrc || img.src;
+      mapImg.alt = 'Map to the venue';
+      map.appendChild(mapImg);
+      first.appendChild(map);
+      // React sets no inline style on PhotoItem, so this sticks (until the
+      // cleanup in applyPatches() restores it on other pages).
+      photo.style.display = 'none';
+      photo.dataset.zechHidden = 'true';
+    }
+
+    block.appendChild(root);
   }
 
   // Coalesce bursts of mutations into a single patch run per frame. This keeps
