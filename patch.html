@@ -2,6 +2,54 @@
   /* Shrink the venue name/address lines. Class-wide rule so it applies to all
      current and future (client-side rendered) .wws-1c3x0j6 elements. */
   .wws-1c3x0j6 { font-size: 23px !important; }
+
+  /* Q + A page. `.QuestionItem` is an unhashed (stable) class on each Q&A
+     pair: <div.QuestionItem><div/><h4>question</h4><div>answer</div></div>.
+     Left-align everything, tuck each answer under its question (the site
+     gives answers a 32px margin on both sides, so they float between
+     questions), and separate pairs with a faint rule. */
+  .QuestionItem,
+  .QuestionItem > h4,
+  .QuestionItem > div {
+    text-align: left !important;
+  }
+  .QuestionItem > h4,
+  .QuestionItem > div {
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+  }
+  /* Items are flex children with `margin: 0 auto` and a max-width, so short
+     ones (e.g. "TBD") shrink to their content and center. Force full width
+     so every item shares the same left edge. */
+  .QuestionItem {
+    width: 100% !important;
+    box-sizing: border-box !important;
+    margin-bottom: 0 !important;
+    padding-bottom: 28px !important;
+  }
+  .QuestionItem + .QuestionItem {
+    border-top: 1px solid rgba(98, 106, 81, 0.25);
+  }
+  .QuestionItem > h4 {
+    margin-top: 28px !important;
+  }
+  .QuestionItem > div:last-child {
+    margin: 10px 0 0 !important;
+  }
+
+  /* Minimal replacement footer: a small outlined diamond to close the page. */
+  footer[data-zech-footer] {
+    display: flex !important;
+    justify-content: center !important;
+    padding: 48px 0 64px !important;
+  }
+  footer[data-zech-footer] .zech-diamond {
+    width: 10px;
+    height: 10px;
+    border: 1px solid currentColor;
+    opacity: 0.6;
+    transform: rotate(45deg);
+  }
 </style>
 <script>
 (function () {
@@ -36,10 +84,16 @@
       }
     });
 
-    // Replace the footer with an empty one (rendered client-side by React).
+    // Replace the footer with a minimal one holding a small diamond
+    // (rendered client-side by React). The data attribute guards re-adding.
     var footer = document.querySelector('footer');
-    if (footer && (footer.childNodes.length || footer.attributes.length)) {
-      footer.replaceWith(document.createElement('footer'));
+    if (footer && !footer.dataset.zechFooter) {
+      var newFooter = document.createElement('footer');
+      newFooter.dataset.zechFooter = 'true';
+      var diamond = document.createElement('div');
+      diamond.className = 'zech-diamond';
+      newFooter.appendChild(diamond);
+      footer.replaceWith(newFooter);
     }
 
     // (The cookie-consent popup is handled server-side in main.go.)
